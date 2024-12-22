@@ -22,6 +22,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "lib": ["es5", "es6", "es7", "dom", "ESNext.AsyncIterable"],
+    "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types"]
   },
   "include": ["src"],
