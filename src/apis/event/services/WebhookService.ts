@@ -135,7 +135,6 @@ export class WebhookService {
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
     console.log(body.block.timestamp)
-    // await this.saveTransactionHistory(chainId, sumAddress, txHash, 'EarlyWithdraw', productId, amountToken);
   }
 
   //redeemYield - [SuperHedge] Principal Credit
