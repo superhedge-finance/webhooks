@@ -62,6 +62,7 @@ export class WebhookService {
     await this.saveProductIdUser(productId, sumAddress);
   }
 
+  //withdrawPrincipal - [User] Withdraw Principal
   async WithdrawPrincipal(body: any,chainId: number ,productAddress: string) {
     console.log("Executing Withdraw");
     const txHash = body.logs[0].transactionHash;
@@ -135,7 +136,6 @@ export class WebhookService {
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
     console.log(body.block.timestamp)
-    // await this.saveTransactionHistory(chainId, sumAddress, txHash, 'EarlyWithdraw', productId, amountToken);
   }
 
   //redeemYield - [SuperHedge] Principal Credit
