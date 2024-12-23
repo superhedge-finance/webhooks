@@ -62,6 +62,7 @@ export class WebhookService {
     await this.saveProductIdUser(productId, sumAddress);
   }
 
+  //withdrawPrincipal - [User] Withdraw Principal
   async WithdrawPrincipal(body: any,chainId: number ,productAddress: string) {
     console.log("Executing Withdraw");
     const txHash = body.logs[0].transactionHash;
