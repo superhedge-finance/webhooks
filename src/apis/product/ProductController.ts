@@ -22,11 +22,11 @@ export class ProductController {
   @Inject()
   private readonly contractService: ContractService;
 
-  @Get("")
-  @Returns(200, Array<CreatedProductDto>)
-  async getProducts(@QueryParams("chainId") chainId: number): Promise<Array<CreatedProductDto>> {
-    return await this.productService.getProducts(chainId);
-  }
+  // @Get("")
+  // @Returns(200, Array<CreatedProductDto>)
+  // async getProducts(@QueryParams("chainId") chainId: number): Promise<Array<CreatedProductDto>> {
+  //   return await this.productService.getProducts(chainId);
+  // }
 
   @Get("/get-test-P")
   @Returns(200, AdminWalletDto)
