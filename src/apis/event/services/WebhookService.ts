@@ -31,7 +31,7 @@ export class WebhookService {
 
   // Define the functions corresponding to each method ID
   async fundAccept(chainId: number, productAddress: string) {
-    console.log("Executing fundAccept")
+    console.log("Executing FundAccept")
     this.productService.updateProductStatus(chainId,productAddress,1)
   }
 
