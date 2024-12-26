@@ -10,12 +10,12 @@ export class CouponController {
   @Inject()
   private readonly couponService: CouponService;
 
-  @Get("/get-coupon-list")
-  async getCouponList(
-    @QueryParams("couponAddressListId") couponAddressListId: string
-  ): Promise<CouponListDto[]> {
-    return await this.couponService.getCouponList(couponAddressListId);
-  }
+  // @Get("/get-coupon-list")
+  // async getCouponList(
+  //   @QueryParams("couponAddressListId") couponAddressListId: string
+  // ): Promise<CouponListDto[]> {
+  //   return await this.couponService.getCouponList(couponAddressListId);
+  // }
 }
 
 
