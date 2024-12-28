@@ -19,7 +19,7 @@ import PT_ABI from "../../../services/abis/PTToken.json";
 import STORE_COUPON_ABI from "../../../services/abis/StoreCoupon.json";
 import Moralis from 'moralis';
 import { Float } from "type-graphql";
-import { CouponService } from "../../coupon/services/CouponService";
+// import { CouponService } from "../../coupon/services/CouponService";
 require('dotenv').config();
 
 const WebSocketServer = require('ws');``
@@ -60,8 +60,8 @@ export class ProductService {
   @Inject(UserRepository)
   private readonly userRepository: UserRepository;
 
-  @Inject(CouponService)
-  private readonly couponService: CouponService;
+  // @Inject(CouponService)
+  // private readonly couponService: CouponService;
 
   create(
     chainId: number,
@@ -1109,116 +1109,6 @@ async getTokenHolderListForCoupon(chainId: number, productAddress: string): Prom
     return { ownerAddresses: [], balanceToken: [] }; // Return an empty array in case of an error
   }
 }
-
-async getHolderListTest(chainId: number, productAddress: string, tokenAddress: string): Promise<string> {
-  const chain = await this.convertChainId(chainId);
-  let cursor = "";
-  
-  // Initialize arrays to store all results
-  let ownerAddresses: string[] = [];
-  let balanceToken: number[] = [];
-
-  // Temporary arrays to store batches of 1000
-  let batchOwnerAddresses: string[] = [];
-  let batchBalanceToken: number[] = [];
-
-  let count = 0;
-  // Generate coupon code
-  const couponCode = await this.couponService.initCouponCode(productAddress);
-
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-  while (true) {
-    try {
-      const response = await Moralis.EvmApi.token.getTokenOwners({
-        "chain": chain,
-        "order": "DESC",
-        "limit": 100, // 1-100 addresses per request
-        "cursor": cursor,
-        "tokenAddress": tokenAddress
-      });
-
-      // Append new addresses and balances to batch arrays
-      const newOwnerAddresses = response.result.map((tokenOwner: any) => tokenOwner.ownerAddress);
-      const newBalanceToken = response.result.map((tokenOwner: any) => tokenOwner.balance);
-
-      batchOwnerAddresses = [...batchOwnerAddresses, ...newOwnerAddresses];
-      batchBalanceToken = [...batchBalanceToken, ...newBalanceToken];
-
-      // Check if batch size has reached 1000
-      if (batchOwnerAddresses.length >= 1000) {
-        count += 1;
-        await this.couponService.saveCouponList(couponCode,batchOwnerAddresses, batchBalanceToken);
-        batchOwnerAddresses = [];
-        batchBalanceToken = [];
-        console.log(`Completed ${count} times`);
-      }
-
-      // Append to the main arrays
-      ownerAddresses = [...ownerAddresses, ...newOwnerAddresses];
-      balanceToken = [...balanceToken, ...newBalanceToken];
-
-      // Update cursor for next iteration
-      cursor = response.response.cursor || "";
-
-      // Break if less than 100 new addresses were fetched
-      console.log(`Completed iteration, total addresses: ${ownerAddresses.length}`);
-      await delay(1000);
-      if (cursor === "") {
-        console.log("No more results available");
-        break;
-      }
-    } catch (error) {
-      console.error("Error fetching token owners:", error);
-      break;
-    }
-  }
-  // Save any remaining addresses in the batch
-  if (batchOwnerAddresses.length > 0) {
-    await this.couponService.saveCouponList(couponCode,batchOwnerAddresses, batchBalanceToken);
-  }
-
-  return couponCode;
-}
-
-
-// async testpush(chainId: number, productAddress: string, tokenAddress: string): Promise<{ ownerAddresses: string[], balanceToken: Number[] }> {
-//   console.log('storeOptionPosition')
-//   let txHash = '0x'
-//   const ethers = require('ethers');
-//   const provider = new ethers.providers.JsonRpcProvider(RPC_PROVIDERS[chainId]);
-//   try {
-//     const privateKey = "0xca35c8a4c9927f76bc24b0863620c05837696dbeafbcbc64e08ae11658c030ab"
-//     const wallet = new ethers.Wallet(privateKey, provider);
-//     const storeCouponAddress = "0x6b5daB93D0481FeB9597dc3e46Da3057A5350B01"
-//     const storeCouponContract = new ethers.Contract(storeCouponAddress, STORE_COUPON_ABI, wallet);
-//     const couponCode = await this.getHolderListTest(chainId, productAddress, tokenAddress);
-
-    
-//     const addressesLength = ownerAddresses.length;
-//     const balanceLength = balanceToken.length;
-    
-//     console.log(`Number of addresses: ${addressesLength}`);
-//     console.log(`Number of balances: ${balanceLength}`);
-//     const gasPrice = await provider.getGasPrice();
-//     const nonce = await provider.getTransactionCount(wallet.address);
-        
-//     // const tx = await storeCouponContract.coupon(ownerAddresses,balanceToken, {
-//     //   from: wallet.address,
-//     //   gasPrice: gasPrice,
-//     //   nonce: nonce
-//     // });
-//     // txHash = tx.hash
-//     // console.log(txHash)
-
-
-//     return {ownerAddresses, balanceToken}
-//   } catch (e) {
-//     console.error(e);
-//     return {ownerAddresses: [], balanceToken: []}
-//   }
-// }
-
-
 
 async getCouponAndTokenAddress(productAddress: string): Promise<{ tokenAddress: string | undefined, coupon: number | undefined }> {
   try {
