@@ -16,7 +16,9 @@ export class HistoryRepository extends Repository<History> {
     productId: number,
     tokenId?: BigNumber,
     supply?: BigNumber,
-    from?: string
+    from?: string,
+    eventName?: string,
+    timestamp?: string
   ) => {
     const exist = await this.findOne({ where: { transactionHash, logIndex } });
     if (!exist) {
@@ -36,6 +38,9 @@ export class HistoryRepository extends Repository<History> {
         entity.amount = amount.toString();
         // entity.amountInDecimal = Number(ethers.utils.formatUnits(amount, DECIMAL[chainId]));
         entity.amountInDecimal = Number(amount);
+        entity.eventTime = timestamp ? new Date(timestamp) : new Date();
+        entity.eventName = eventName || '';
+
         if (type == HISTORY_TYPE.WITHDRAW) {
           entity.totalBalance = (totalBalance.subUnsafe(FixedNumber.from(entity.amountInDecimal))).toString();
         } else {
