@@ -145,6 +145,7 @@ export class WebhookService {
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
     await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Early Withdraw - Confirm', productId, amountToken, timestamp);
+    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Early Withdraw - Principal (Market Price)', productId, amountToken, timestamp);
     console.log(body.block.timestamp)
   }
 
