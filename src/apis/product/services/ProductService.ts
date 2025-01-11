@@ -162,7 +162,22 @@ export class ProductService {
       maxCapacity: product.maxCapacity,
       currentCapacity: String(onchainCurrentCapacity),
       status: product.status,
-      issuanceCycle: product.issuanceCycle,
+      issuanceCycle: {
+        coupon: (await productContract.issuanceCycle()).coupon,
+        strikePrice1: (await productContract.issuanceCycle()).strikePrice1.toNumber(),
+        strikePrice2: (await productContract.issuanceCycle()).strikePrice2.toNumber(),
+        strikePrice3: (await productContract.issuanceCycle()).strikePrice3.toNumber(),
+        strikePrice4: (await productContract.issuanceCycle()).strikePrice4.toNumber(),
+        tr1: (await productContract.issuanceCycle()).tr1.toNumber(),
+        tr2: (await productContract.issuanceCycle()).tr2.toNumber(),
+        issuanceDate: (await productContract.issuanceCycle()).issuanceDate.toNumber(),
+        maturityDate: (await productContract.issuanceCycle()).maturityDate.toNumber(),
+        apy: (await productContract.issuanceCycle()).apy,
+        underlyingSpotRef: (await productContract.issuanceCycle()).underlyingSpotRef,
+        optionMinOrderSize: (await productContract.issuanceCycle()).optionMinOrderSize,
+        subAccountId: (await productContract.issuanceCycle()).subAccountId,
+        participation: (await productContract.issuanceCycle()).participation
+      },
       chainId: product.chainId,
       vaultStrategy: product.vaultStrategy,
       risk: product.risk,
@@ -1192,4 +1207,51 @@ async getTokenHolderListForProfit(chainId: number, productAddress: string): Prom
     return { ownerAddresses: [], balanceToken: [] }; // Return an empty array in case of an error
   }
 }
+
+  async updateProductInformation(chainId: number, productAddress: string): Promise<boolean> {
+    console.log("updateProductInformation");
+    const provider = new providers.JsonRpcProvider(RPC_PROVIDERS[chainId]);
+    const productContract = new Contract(productAddress, PRODUCT_ABI, provider);
+
+    const updateResult = await this.productRepository.update(
+      { address: productAddress },
+      {
+        name: await productContract.name(),
+        underlying: await productContract.underlying(),
+        maxCapacity: String(Number(utils.formatUnits(await productContract.maxCapacity(), 0))),
+        status: await productContract.status(),
+        currentCapacity: String(Number(utils.formatUnits(await productContract.currentCapacity(), 0))),
+        issuanceCycle: {
+          coupon: (await productContract.issuanceCycle()).coupon,
+          strikePrice1: (await productContract.issuanceCycle()).strikePrice1.toNumber(),
+          strikePrice2: (await productContract.issuanceCycle()).strikePrice2.toNumber(),
+          strikePrice3: (await productContract.issuanceCycle()).strikePrice3.toNumber(),
+          strikePrice4: (await productContract.issuanceCycle()).strikePrice4.toNumber(),
+          tr1: (await productContract.issuanceCycle()).tr1.toNumber(),
+          tr2: (await productContract.issuanceCycle()).tr2.toNumber(),
+          issuanceDate: (await productContract.issuanceCycle()).issuanceDate.toNumber(),
+          maturityDate: (await productContract.issuanceCycle()).maturityDate.toNumber(),
+          apy: (await productContract.issuanceCycle()).apy,
+          underlyingSpotRef: (await productContract.issuanceCycle()).underlyingSpotRef,
+          optionMinOrderSize: (await productContract.issuanceCycle()).optionMinOrderSize,
+          subAccountId: (await productContract.issuanceCycle()).subAccountId,
+          participation: (await productContract.issuanceCycle()).participation
+        },
+      }
+    );
+
+    if (updateResult.affected && updateResult.affected > 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+
+
+
+
+
+
+
 }

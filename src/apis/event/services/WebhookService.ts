@@ -180,6 +180,9 @@ export class WebhookService {
 
     '0x6b5b9696': (body, chainId, productAddress) => this.earlyWithdraw(body, chainId, productAddress),
     '0x8fe0a864': (body, chainId, productAddress) => this.optionWithdrawalPaid(body, chainId, productAddress),
+
+    '0xe2fc4d4d': (_, chainId, productAddress) => this.updateProductInformation(chainId, productAddress),
+    '0x42966c68': (_, chainId, productAddress) => this.updateProductInformation(chainId, productAddress),
   };
 
   async handleWebhook(body: any) {
@@ -194,6 +197,11 @@ export class WebhookService {
 
     const methodId = body.txs[0].input.slice(0, 10);
     await this.executeMethod(body, chainId, methodId, sumAddress);
+  }
+
+  async updateProductInformation(chainId: number, productAddress: string) {
+    console.log("Executing updateProductInformation");
+    await this.productService.updateProductInformation(chainId, productAddress);
   }
 
 
