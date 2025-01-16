@@ -21,7 +21,7 @@ import { WebhookController } from "./apis/event/WebhookController";
   acceptMimes: ["application/json", "image/png", "text/csv"],
   // httpPort: process.env.PORT || 3000,
   // httpPort: "0.0.0.0:3000",
-  //httpsPort: false, // CHANGE
+  // httpsPort: false, // CHANGE
   
   httpsPort: 3000, // 
   httpPort: false,   // 
