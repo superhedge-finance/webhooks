@@ -1,0 +1,41 @@
+name: Backend - Build and Deploy - Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+permissions:
+  id-token: write
+  contents: read
+  actions: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.STAGING_DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: SSH into server and pull code
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.STAGING_DEPLOY_HOST }}
+          username: ${{ secrets.STAGING_DEPLOY_USER }}
+          key: ${{ secrets.STAGING_DEPLOY_SSH_KEY }}
+          port: ${{ secrets.STAGING_DEPLOY_PORT }}
+          script: |
+            cd ${{ secrets.STAGING_DEPLOY_TARGET }}
+            git pull
+            docker compose up --build -d
+            docker compose ps -a
+            echo "GITHUB_RUN_ID=${{ github.run_id }}" > .backend.github.env 
