@@ -28,7 +28,7 @@ export class ProductController {
   //   return await this.productService.getProducts(chainId);
   // }
 
-  @Get("/get-test-Bunoi")
+  @Get("/get-test-Bunoioi")
   @Returns(200, AdminWalletDto)
   async getAdminWalletTest(
     @QueryParams("chainId") chainId: number,
