@@ -44,6 +44,10 @@ export class History {
 
   @Column({ nullable: true })
   @Property()
+  amountDecimal: string;
+
+  @Column({ nullable: true })
+  @Property()
   totalBalance: string;
 
   @Column()
@@ -90,4 +94,6 @@ export class History {
 
   @UpdateDateColumn({ type: "timestamp with time zone", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
   public updated_at: Date;
+
+
 }

@@ -97,6 +97,18 @@ Product {
   @OneToOne(() => History, (history) => history.product)
   history: History;
 
+  @Column({ nullable: true , default: "USDC" })
+  @Property()
+  currencyName: string;
+
+  @Column({ nullable: true , default: "ETH" })
+  @Property()
+  underlyingName: string;
+
+  @Column({ nullable: true , default: "coupon" })
+  @Property()
+  couponTooltip: string;
+
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
   public created_at: Date;
 
