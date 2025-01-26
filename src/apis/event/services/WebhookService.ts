@@ -50,6 +50,12 @@ export class WebhookService {
     this.productService.updateProductStatus(chainId,productAddress,4)
   }
 
+  async getTokenInformation(information: any) : Promise<{tokenSymbol: string, decimals: number}> {
+    const tokenSymbol = information.tokenSymbol;
+    const decimals = Number(information.tokenDecimals);
+    return { tokenSymbol, decimals };
+  }
+
   async Deposit(body: any,chainId: number ,productAddress: string) {
     console.log("Executing Deposit");
     const txHash = body.logs[0].transactionHash;
@@ -58,7 +64,8 @@ export class WebhookService {
     const timestamp = body.block.timestamp
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
-    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Principal Deposit', productId, amountToken, timestamp);
+    const {tokenSymbol, decimals} = await this.getTokenInformation(body.erc20Transfers[0]);
+    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Principal Deposit', productId, amountToken, timestamp, tokenSymbol, decimals);
     await this.productService.updateCurrentCapacity(chainId, productAddress);
     await this.saveProductIdUser(productId, sumAddress);
   }
@@ -72,7 +79,9 @@ export class WebhookService {
     const timestamp = body.block.timestamp
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
-    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Principal Withdraw', productId, amountToken, timestamp);
+    const {tokenSymbol, decimals} = await this.getTokenInformation(body.erc20Transfers[1]);
+    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Principal Withdraw', productId, amountToken, timestamp, tokenSymbol, decimals);
+    await this.productService.updateCurrentCapacity(chainId, productAddress);
     await this.removeroductIdUser(productId, sumAddress);
   }
 
@@ -85,7 +94,7 @@ export class WebhookService {
     const timestamp = body.block.timestamp
     const {sumAddress} = await this.checkSumAddress(productAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
-    await this.saveTransactionHistory(chainId, "Admin", txHash, '[SuperHedge] Early Withdraw - Option Payout (Airdrop)', productId, amountToken, timestamp);
+    await this.saveTransactionHistory(chainId, "Admin", txHash, '[SuperHedge] Early Withdraw - Option Payout (Airdrop)', productId, amountToken, timestamp,'',0);
   }
 
   //coupon - [SuperHedge] Coupon Credited
@@ -95,22 +104,21 @@ export class WebhookService {
     const amountToken = '0';
     const timestamp = body.block.timestamp
     const { productId } = await this.getProductId(productAddress, chainId);
-    await this.saveTransactionHistory(chainId, "Admin", txHash, '[SuperHedge] Option Coupon Credit', productId, amountToken, timestamp);
+    await this.saveTransactionHistory(chainId, "Admin", txHash, '[SuperHedge] Option Coupon Credit', productId, amountToken, timestamp,'',0);
   }
 
   //withdrawCoupon - [User] Coupon Withdraw
   async withdrawCoupon(body: any,chainId: number ,productAddress: string){
     console.log("Executing withdrawCoupon");
     const txHash = body.logs[0].transactionHash;
-    console.log(body.block.timestamp)
     const timestamp = body.block.timestamp
     // const timestamp = new Date(body.block.timestamp * 1000).toISOString().replace('T', ' ');
-    console.log(timestamp)
     const userAddress =  body.txs[0].fromAddress;
     const amountToken = body.erc20Transfers[0].value;
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
-    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Coupon Withdraw', productId, amountToken, timestamp);
+    const {tokenSymbol, decimals} = await this.getTokenInformation(body.erc20Transfers[0]);
+    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Coupon Withdraw', productId, amountToken, timestamp, tokenSymbol, decimals);
   }
 
   //redeemOptionPayout() - [SuperHedge] Option Profit Credit
@@ -120,7 +128,7 @@ export class WebhookService {
     const amountToken = '0';
     const timestamp = body.block.timestamp
     const { productId } = await this.getProductId(productAddress, chainId);
-    await this.saveTransactionHistory(chainId, "Admin", txHash, '[SuperHedge] Option Payout Credit', productId, amountToken, timestamp);
+    await this.saveTransactionHistory(chainId, "Admin", txHash, '[SuperHedge] Option Payout Credit', productId, amountToken, timestamp,'',0);
   }
 
   //withdrawOption - [User] Option Payout Withdraw
@@ -132,7 +140,8 @@ export class WebhookService {
     const timestamp = body.block.timestamp
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
-    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Option Payout Withdraw', productId, amountToken, timestamp);
+    const {tokenSymbol, decimals} = await this.getTokenInformation(body.erc20Transfers[0]);
+    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Option Payout Withdraw', productId, amountToken, timestamp, tokenSymbol, decimals);
   }
 
 
@@ -145,8 +154,9 @@ export class WebhookService {
     const timestamp = body.block.timestamp
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
-    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Early Withdraw - Confirm', productId, amountToken, timestamp);
-    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Early Withdraw - Principal (Market Price)', productId, amountToken, timestamp);
+    const {tokenSymbol, decimals} = await this.getTokenInformation(body.erc20Transfers[0]);
+    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Early Withdraw - Confirm', productId, amountToken, timestamp, tokenSymbol, decimals);
+    await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Early Withdraw - Principal (Market Price)', productId, amountToken, timestamp, tokenSymbol, decimals);
     console.log(body.block.timestamp)
   }
 
@@ -160,7 +170,7 @@ export class WebhookService {
     console.log(productAddress)
     const { productId } = await this.getProductId(productAddress, chainId);
     console.log(productId)
-    await this.saveTransactionHistory(chainId, "Admin", txHash, '[SuperHedge] Principal Credit', productId, amountToken, timestamp);
+    await this.saveTransactionHistory(chainId, "Admin", txHash, '[SuperHedge] Principal Credit', productId, amountToken, timestamp,'',0);
   }
 
   // Create a mapping between method IDs and functions
@@ -241,7 +251,7 @@ export class WebhookService {
     return { productId };
   }
 
-  async saveTransactionHistory(chainId: number, userAddress: string, txHash: string, eventName: string, productId: number, amountToken: string, timestamp: any) {
+  async saveTransactionHistory(chainId: number, userAddress: string, txHash: string, eventName: string, productId: number, amountToken: string, timestamp: any, tokenSymbol: string, decimals: number) {
     try {
       let withdrawType: WITHDRAW_TYPE = WITHDRAW_TYPE.NONE;
       let type: HISTORY_TYPE; 
@@ -297,7 +307,9 @@ export class WebhookService {
         ethers.BigNumber.from('0'),
         undefined,
         eventName,
-        new Date(timestamp * 1000).toISOString()
+        new Date(timestamp * 1000).toISOString(),
+        tokenSymbol,
+        decimals
       );
       
       console.log("History saved");

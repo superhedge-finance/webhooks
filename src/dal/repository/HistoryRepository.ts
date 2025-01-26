@@ -18,7 +18,9 @@ export class HistoryRepository extends Repository<History> {
     supply?: BigNumber,
     from?: string,
     eventName?: string,
-    timestamp?: string
+    timestamp?: string,
+    tokenSymbol?: string,
+    decimals?: number
   ) => {
     const exist = await this.findOne({ where: { transactionHash, logIndex } });
     if (!exist) {
@@ -44,6 +46,8 @@ export class HistoryRepository extends Repository<History> {
         entity.amountDecimal = amount.toString();
         entity.eventTime = timestamp ? new Date(timestamp) : new Date();
         entity.eventName = eventName || '';
+        entity.tokenSymbol = tokenSymbol || '';
+        entity.decimals = decimals || 0;
         if (type == HISTORY_TYPE.WITHDRAW) {
           entity.totalBalance = (totalBalance.subUnsafe(FixedNumber.from(entity.amountDecimal))).toString();
         } else {
