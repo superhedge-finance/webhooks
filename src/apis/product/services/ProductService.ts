@@ -1208,6 +1208,22 @@ async getTokenHolderListForProfit(chainId: number, productAddress: string): Prom
   }
 }
 
+  async updateCurrentCapacity(chainId: number, productAddress: string): Promise<boolean> {
+    const provider = new providers.JsonRpcProvider(RPC_PROVIDERS[chainId]);
+    const productContract = new Contract(productAddress, PRODUCT_ABI, provider);
+    const currentCapacity = await productContract.currentCapacity();
+    try {
+      await this.productRepository.update(
+        { address: productAddress },
+        { currentCapacity: currentCapacity.toString() }
+      );
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  }
+
   async updateProductInformation(chainId: number, productAddress: string): Promise<boolean> {
     console.log("updateProductInformation");
     const provider = new providers.JsonRpcProvider(RPC_PROVIDERS[chainId]);

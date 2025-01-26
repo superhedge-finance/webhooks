@@ -59,6 +59,7 @@ export class WebhookService {
     const {sumAddress} = await this.checkSumAddress(userAddress);
     const { productId } = await this.getProductId(productAddress, chainId);
     await this.saveTransactionHistory(chainId, sumAddress, txHash, '[User] Principal Deposit', productId, amountToken, timestamp);
+    await this.productService.updateCurrentCapacity(chainId, productAddress);
     await this.saveProductIdUser(productId, sumAddress);
   }
 
@@ -169,7 +170,7 @@ export class WebhookService {
     '0x863623bb': (_, chainId, productAddress) => this.Issuance(chainId, productAddress),
     '0x87b65207': (_, chainId, productAddress) => this.Mature(chainId, productAddress),
 
-    '0x9a408321': (body, chainId, productAddress) => this.Deposit(body, chainId, productAddress),
+    '0xb6b55f25': (body, chainId, productAddress) => this.Deposit(body, chainId, productAddress),
     '0xe1f06f54': (body, chainId, productAddress) => this.WithdrawPrincipal(body, chainId, productAddress),
     '0xf399efe8': (body, chainId, productAddress) => this.couponCredited(body, chainId, productAddress),
     '0x6d2b8111': (body, chainId, productAddress) => this.withdrawCoupon(body, chainId, productAddress),
@@ -241,55 +242,69 @@ export class WebhookService {
   }
 
   async saveTransactionHistory(chainId: number, userAddress: string, txHash: string, eventName: string, productId: number, amountToken: string, timestamp: any) {
-    let withdrawType: WITHDRAW_TYPE = WITHDRAW_TYPE.NONE;
-    let type: HISTORY_TYPE; 
-    console.log(eventName)
+    try {
+      let withdrawType: WITHDRAW_TYPE = WITHDRAW_TYPE.NONE;
+      let type: HISTORY_TYPE; 
+      console.log(eventName);
 
-    switch (eventName) {
-        case "WithdrawPrincipal":
-            withdrawType = WITHDRAW_TYPE.PRINCIPAL;
-            type = HISTORY_TYPE.WITHDRAW;
-            break;
+      switch (eventName) {
+        case "[User] Principal Withdraw":
+          withdrawType = WITHDRAW_TYPE.PRINCIPAL;
+          type = HISTORY_TYPE.WITHDRAW;
+          break;
         case '[SuperHedge] Option Coupon Credit':
-            type = HISTORY_TYPE.COUPON_CREDIT;
-            break;
+          type = HISTORY_TYPE.COUPON_CREDIT;
+          break;
         case '[SuperHedge] Principal Credit':
-            type = HISTORY_TYPE.PRINCIPAL_CREDIT;
-            break;
-        case 'WithdrawCoupon':
-            type = HISTORY_TYPE.WITHDRAW;
-            withdrawType = WITHDRAW_TYPE.COUPON;
-            break;
-        case 'WithdrawOption':
-            type = HISTORY_TYPE.WITHDRAW;
-            withdrawType = WITHDRAW_TYPE.OPTION;
-            break;
+          type = HISTORY_TYPE.PRINCIPAL_CREDIT;
+          break;
+        case '[User] Coupon Withdraw':
+          type = HISTORY_TYPE.WITHDRAW;
+          withdrawType = WITHDRAW_TYPE.COUPON;
+          break;
+        case '[User] Option Payout Withdraw':
+          type = HISTORY_TYPE.WITHDRAW;
+          withdrawType = WITHDRAW_TYPE.OPTION;
+          break;
         case '[SuperHedge] Option Profit Credit':
-            type = HISTORY_TYPE.OPTION_PROFIT_CREDIT;
-            break;
-        case 'EarlyWithdraw':
-            type = HISTORY_TYPE.EARLY_WITHDRAW;
-            break;
+          type = HISTORY_TYPE.OPTION_PROFIT_CREDIT;
+          break;
+        case '[User] Early Withdraw - Confirm':
+          type = HISTORY_TYPE.EARLY_WITHDRAW;
+          break;
         default:
-            type = HISTORY_TYPE.DEPOSIT;
-    }
-    await this.historyRepository.createHistory(
+          type = HISTORY_TYPE.DEPOSIT;
+      }
+
+      // Ensure amountToken is a valid string representation of a number
+      if (!amountToken || isNaN(Number(amountToken))) {
+        throw new Error(`Invalid amountToken value: ${amountToken}`);
+      }
+
+      // Convert amountToken to BigNumber safely
+      const amountBigNumber = ethers.BigNumber.from(amountToken.toString());
+
+      await this.historyRepository.createHistory(
         chainId,
         userAddress,
-        ethers.BigNumber.from(amountToken),
+        amountBigNumber, // Use the BigNumber here
         txHash,
         0,
         type,
         withdrawType,
         productId,
-        ethers.BigNumber.from(0),
-        ethers.BigNumber.from(0),
+        ethers.BigNumber.from('0'),
+        ethers.BigNumber.from('0'),
         undefined,
         eventName,
         new Date(timestamp * 1000).toISOString()
-    );
-    
-    console.log("History saved");
+      );
+      
+      console.log("History saved");
+    } catch (error) {
+      console.error('Error saving transaction history:', error);
+      throw error;
+    }
   }
 
   // Function to execute the corresponding method based on input
