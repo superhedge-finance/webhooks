@@ -17,47 +17,47 @@ export class EventsController implements OnInit {
 
   async $onInit() {
     // Wait for database connection to be established
-    if (!SuperHedgeDataSource.isInitialized) {
-      await SuperHedgeDataSource.initialize();
-    }
+    // if (!SuperHedgeDataSource.isInitialized) {
+    //   await SuperHedgeDataSource.initialize();
+    // }
 
-    console.log("start cron job");
-    cron.schedule("*/1 * * * *", async () => {
-      try {
-        for (const chainId of SUPPORT_CHAINS) {
-          await this.productService.removeTransactionOvertime();
+    // console.log("start cron job");
+    // cron.schedule("*/1 * * * *", async () => {
+    //   try {
+    //     for (const chainId of SUPPORT_CHAINS) {
+    //       await this.productService.removeTransactionOvertime();
           
-          let products: Product[] = [];
-          try {
-            products = await this.productService.getProducts(chainId);
-          } catch (error) {
-            console.error(`Failed to fetch products for chain ${chainId}:`, error);
-            continue;
-          }
+    //       let products: Product[] = [];
+    //       try {
+    //         products = await this.productService.getProducts(chainId);
+    //       } catch (error) {
+    //         console.error(`Failed to fetch products for chain ${chainId}:`, error);
+    //         continue;
+    //       }
 
-          if (!products || !products.length) {
-            console.log(`No products found for chain ${chainId}`);
-            continue;
-          }
+    //       if (!products || !products.length) {
+    //         console.log(`No products found for chain ${chainId}`);
+    //         continue;
+    //       }
 
-          const productList = products.map(product => product.address);
+    //       const productList = products.map(product => product.address);
           
-          for (const productAddress of productList) {
-            try {
-              const {addressesList, amountsList} = await this.productService.getWithdrawList(productAddress);
-              if (addressesList && addressesList.length > 0) {
-                const txResult = await this.productService.storeOptionPosition(chainId, productAddress, addressesList, amountsList);
-                console.log(txResult);
-              }
-            } catch (error) {
-              console.error(`Error processing product ${productAddress}:`, error);
-              continue;
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Cron job failed:", error);
-      }
-    });
+    //       for (const productAddress of productList) {
+    //         try {
+    //           const {addressesList, amountsList} = await this.productService.getWithdrawList(productAddress);
+    //           if (addressesList && addressesList.length > 0) {
+    //             const txResult = await this.productService.storeOptionPosition(chainId, productAddress, addressesList, amountsList);
+    //             console.log(txResult);
+    //           }
+    //         } catch (error) {
+    //           console.error(`Error processing product ${productAddress}:`, error);
+    //           continue;
+    //         }
+    //       }
+    //     }
+    //   } catch (error) {
+    //     console.error("Cron job failed:", error);
+    //   }
+    // });
   }
 }
