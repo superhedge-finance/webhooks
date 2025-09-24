@@ -88,10 +88,17 @@ function registerProvidersOnce() {
 }
 
 export default async function handler(req: any, res: any) {
-  if (!cachedHandler) {
-    registerProvidersOnce();
-    const platform = await PlatformExpress.bootstrap(Server);
-    cachedHandler = platform.callback();
+  try {
+    if (!cachedHandler) {
+      registerProvidersOnce();
+      const platform = await PlatformExpress.bootstrap(Server);
+      cachedHandler = platform.callback();
+    }
+    return cachedHandler(req, res);
+  } catch (err: any) {
+    console.error("Bootstrap/handler error:", err?.stack || err);
+    res.statusCode = 500;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ error: "internal_error", message: err?.message || String(err) }));
   }
-  return cachedHandler(req, res);
 }
