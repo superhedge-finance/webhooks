@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import "cors";
 import "cookie-parser";
 import "compression";
