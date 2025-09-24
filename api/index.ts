@@ -1,3 +1,10 @@
+import "cors";
+import "cookie-parser";
+import "compression";
+import "method-override";
+import "body-parser";
+import "@tsed/engines";
+import "@tsed/platform-views";
 import { registerProvider } from "@tsed/di";
 import { Logger } from "@tsed/logger";
 import { PlatformExpress } from "@tsed/platform-express";
