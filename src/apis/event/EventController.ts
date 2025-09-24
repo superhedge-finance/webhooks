@@ -4,7 +4,6 @@ import { SUPPORT_CHAINS } from "../../shared/constants";
 import * as cron from "node-cron";
 import { SuperHedgeDataSource } from "../../dal/data-source";
 import { WebhookService } from "./services/WebhookService";
-import { Product } from "src/dal/entity/Product";
 
 @Controller("/events")
 export class EventsController implements OnInit {
