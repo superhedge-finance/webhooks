@@ -38,8 +38,10 @@ function registerProvidersOnce() {
     type: "typeorm:datasource",
     deps: [Logger],
     async useAsyncFactory(logger: Logger) {
-      await SuperHedgeDataSource.initialize();
-      logger.info("Connected with typeorm to database: PostgreSQL");
+      if (!SuperHedgeDataSource.isInitialized) {
+        await SuperHedgeDataSource.initialize();
+        logger.info("Connected with typeorm to database: PostgreSQL");
+      }
       return SuperHedgeDataSource;
     },
     hooks: {
