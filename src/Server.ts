@@ -10,8 +10,8 @@ import "@tsed/engines";
 import "./datasources/index";
 // import "./resolvers/index"; // remove GraphQL resolvers
 import { config } from "./config";
-import * as pages from "./pages";
-import * as apis from "./apis";
+// import * as pages from "./pages";
+// import * as apis from "./apis";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import compression from "compression";
@@ -29,16 +29,16 @@ import { WebhookController } from "./apis/event/WebhookController";
   httpsPort: false,
   componentsScan: false,
   mount: {
-    "/": [...Object.values(pages)],
-    "/api": [...Object.values(apis)],
-    "/webhook": [WebhookController], // Mount the webhook controller here
+    // Only mount webhook routes on Vercel to reduce bootstrap surface
+    "/webhook": [WebhookController],
   },
-  swagger: [
-    {
-      path: "/doc",
-      specVersion: "3.0.1",
-    },
-  ],
+  // Optionally disable swagger in serverless to reduce scanning
+  // swagger: [
+  //   {
+  //     path: "/doc",
+  //     specVersion: "3.0.1",
+  //   },
+  // ],
   middlewares: [
     cors(),
     cookieParser(),
