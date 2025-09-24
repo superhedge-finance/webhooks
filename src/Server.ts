@@ -4,19 +4,14 @@ import { PlatformApplication } from "@tsed/common";
 import "@tsed/platform-express"; // Keep this import
 import "@tsed/ajv";
 import "@tsed/swagger";
-// import "@tsed/typegraphql"; // disable GraphQL on Vercel unless configured
-import "@tsed/platform-views";
-import "@tsed/engines";
+import "@tsed/typegraphql";
 import "./datasources/index";
-// import "./resolvers/index"; // remove GraphQL resolvers
+import "./resolvers/index";
 import { config } from "./config";
 import * as pages from "./pages";
 import * as apis from "./apis";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import compression from "compression";
-import methodOverride from "method-override";
-import bodyParser from "body-parser";
+import * as fs from 'fs';
+import * as path from "path";
 
 // Import the Webhook Controller
 import { WebhookController } from "./apis/event/WebhookController";
@@ -24,9 +19,17 @@ import { WebhookController } from "./apis/event/WebhookController";
 @Configuration({
   ...config,
   acceptMimes: ["application/json", "image/png", "text/csv"],
-  // In serverless/Vercel we don't bind ports inside the app
-  httpPort: false,
-  httpsPort: false,
+  httpPort: process.env.PORT || 3000,
+  // httpPort: "0.0.0.0:3000",
+  httpsPort: false, // CHANGE
+  
+  // httpsPort: 3000, // 
+  // httpPort: false,   // 
+  // httpsOptions: {
+  //   key: fs.readFileSync(path.resolve(__dirname, '../ssl/private.key')),
+  //   cert: fs.readFileSync(path.resolve(__dirname, '../ssl/certificate.crt'))
+  // },
+
   componentsScan: false,
   mount: {
     "/": [...Object.values(pages)],
@@ -40,16 +43,18 @@ import { WebhookController } from "./apis/event/WebhookController";
     },
   ],
   middlewares: [
-    cors(),
-    cookieParser(),
-    compression(),
-    methodOverride(),
-    bodyParser.json(),
-    { use: bodyParser.urlencoded({ extended: true }) },
+    "cors",
+    "cookie-parser",
+    "compression",
+    "method-override",
+    "json-parser",
+    { use: "urlencoded-parser", options: { extended: true } },
   ],
   views: {
-    root: join(process.cwd(), "views"),
-    viewEngine: "ejs",
+    root: join(process.cwd(), "../views"),
+    extensions: {
+      ejs: "ejs",
+    },
   },
   exclude: ["**/*.spec.ts"],
 })
