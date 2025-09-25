@@ -109,6 +109,128 @@ export default async function handler(req: any, res: any) {
         res.json({ status: 'ok' });
       });
       
+      // Swagger UI route
+      app.get('/doc', (req: any, res: any) => {
+        const swaggerHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SuperHedge Webhooks API</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: '/swagger.json',
+      dom_id: '#swagger-ui',
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIBundle.presets.standalone
+      ]
+    });
+  </script>
+</body>
+</html>`;
+        res.send(swaggerHtml);
+      });
+      
+      // Swagger JSON
+      app.get('/swagger.json', (req: any, res: any) => {
+        const swaggerSpec = {
+          openapi: "3.0.0",
+          info: {
+            title: "SuperHedge Webhooks API",
+            version: "1.0.0",
+            description: "API for handling blockchain webhooks"
+          },
+          servers: [
+            {
+              url: "https://webhooks-9rd8hqotj-superhedge.vercel.app",
+              description: "Production server"
+            }
+          ],
+          paths: {
+            "/webhook": {
+              post: {
+                summary: "Handle webhook",
+                description: "Process incoming webhook from Moralis",
+                requestBody: {
+                  required: true,
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "object",
+                        properties: {
+                          chainId: { type: "string" },
+                          confirmed: { type: "boolean" },
+                          abi: { type: "array" },
+                          logs: { type: "array" },
+                          txs: { type: "array" },
+                          erc20Transfers: { type: "array" },
+                          block: { type: "object" }
+                        }
+                      }
+                    }
+                  }
+                },
+                responses: {
+                  "200": {
+                    description: "Webhook processed successfully",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          type: "object",
+                          properties: {
+                            message: { type: "string" }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "400": {
+                    description: "Bad request",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          type: "object",
+                          properties: {
+                            error: { type: "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/health": {
+              get: {
+                summary: "Health check",
+                description: "Check if the service is running",
+                responses: {
+                  "200": {
+                    description: "Service is healthy",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          type: "object",
+                          properties: {
+                            status: { type: "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        };
+        res.json(swaggerSpec);
+      });
+      
       cachedHandler = app;
     }
     return cachedHandler(req, res);
