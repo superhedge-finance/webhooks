@@ -6,10 +6,10 @@ import "method-override";
 import "body-parser";
 import "@tsed/engines";
 import "@tsed/platform-views";
-import { registerProvider } from "@tsed/di";
-import { Logger } from "@tsed/logger";
-import { PlatformExpress } from "@tsed/platform-express";
-import { Server } from "../src/Server";
+import { WebhookController } from "../src/apis/event/WebhookController";
+import { WebhookService } from "../src/apis/event/services/WebhookService";
+import { ProductService } from "../src/apis/product/services/ProductService";
+import { ContractService } from "../src/services/ContractService";
 import {
   Product,
   ProductRepository,
@@ -27,88 +27,89 @@ import {
   CouponAddressListRepository,
   CouponAddressList,
 } from "../src/dal";
-import { ProductService } from "../src/apis/product/services/ProductService";
-import { ContractService } from "../src/services/ContractService";
 
 let cachedHandler: any;
-let providersRegistered = false;
+let initialized = false;
 
-function registerProvidersOnce() {
-  if (providersRegistered) return;
+async function initializeServices() {
+  if (initialized) return;
 
-  registerProvider({
-    provide: SuperHedgeDataSource,
-    type: "typeorm:datasource",
-    deps: [Logger],
-    async useAsyncFactory(logger: Logger) {
-      if (!SuperHedgeDataSource.isInitialized) {
-        await SuperHedgeDataSource.initialize();
-        logger.info("Connected with typeorm to database: PostgreSQL");
-      }
-      return SuperHedgeDataSource;
-    },
-    hooks: {
-      $onDestroy(dataSource) {
-        return dataSource.isInitialized && dataSource.destroy();
-      },
-    },
-  });
+  // Initialize database
+  if (!SuperHedgeDataSource.isInitialized) {
+    await SuperHedgeDataSource.initialize();
+    console.log("Connected with typeorm to database: PostgreSQL");
+  }
 
-  registerProvider({
-    provide: UserRepository,
-    useValue: new UserRepository(User, SuperHedgeDataSource.createEntityManager()),
-  });
-
-  registerProvider({
-    provide: ProductRepository,
-    useValue: new ProductRepository(Product, SuperHedgeDataSource.createEntityManager()),
-  });
-
-  registerProvider({
-    provide: WithdrawRequestRepository,
-    useValue: new WithdrawRequestRepository(WithdrawRequest, SuperHedgeDataSource.createEntityManager()),
-  });
-
-  registerProvider({
-    provide: HistoryRepository,
-    useValue: new HistoryRepository(History, SuperHedgeDataSource.createEntityManager()),
-  });
-
-  registerProvider({
-    provide: RefCodeRepository,
-    useValue: new RefCodeRepository(RefCode, SuperHedgeDataSource.createEntityManager()),
-  });
-
-  registerProvider({
-    provide: CouponListRepository,
-    useValue: new CouponListRepository(CouponList, SuperHedgeDataSource.createEntityManager()),
-  });
-
-  registerProvider({
-    provide: CouponAddressListRepository,
-    useValue: new CouponAddressListRepository(CouponAddressList, SuperHedgeDataSource.createEntityManager()),
-  });
-
-  // Register services explicitly
-  registerProvider({
-    provide: ProductService,
-    useClass: ProductService,
-  });
-
-  registerProvider({
-    provide: ContractService,
-    useClass: ContractService,
-  });
-
-  providersRegistered = true;
+  initialized = true;
 }
 
 export default async function handler(req: any, res: any) {
   try {
     if (!cachedHandler) {
-      registerProvidersOnce();
-      const platform = await PlatformExpress.bootstrap(Server);
-      cachedHandler = platform.callback();
+      await initializeServices();
+      
+      // Create a simple Express app for webhook handling
+      const express = require('express');
+      const app = express();
+      
+      // Middleware
+      app.use(express.json());
+      app.use(express.urlencoded({ extended: true }));
+      
+      // Initialize repositories
+      const productRepository = new ProductRepository(Product, SuperHedgeDataSource.createEntityManager());
+      const historyRepository = new HistoryRepository(History, SuperHedgeDataSource.createEntityManager());
+      const withdrawRequestRepository = new WithdrawRequestRepository(WithdrawRequest, SuperHedgeDataSource.createEntityManager());
+      const userRepository = new UserRepository(User, SuperHedgeDataSource.createEntityManager());
+      
+      // Initialize services
+      const productService = new ProductService();
+      const contractService = new ContractService();
+      const webhookService = new WebhookService();
+      
+      // Manually inject dependencies
+      (productService as any).productRepository = productRepository;
+      (productService as any).historyRepository = historyRepository;
+      (productService as any).withdrawRequestRepository = withdrawRequestRepository;
+      (productService as any).userRepository = userRepository;
+      
+      (webhookService as any).productRepository = productRepository;
+      (webhookService as any).historyRepository = historyRepository;
+      (webhookService as any).withdrawRequestRepository = withdrawRequestRepository;
+      (webhookService as any).userRepository = userRepository;
+      (webhookService as any).productService = productService;
+      (webhookService as any).contractService = contractService;
+      
+      // Webhook route
+      app.post('/webhook', async (req: any, res: any) => {
+        try {
+          const providedSignature = req.headers["x-signature"];
+          const generatedSignature = require('web3').utils.sha3(JSON.stringify(req.body) + process.env.MORALIS_STREAM_API_KEY);
+          
+          console.log(generatedSignature);
+          console.log(providedSignature);
+          
+          if (req.body.abi.length != 0) {
+            if (req.body.confirmed && generatedSignature === providedSignature) {
+              await webhookService.handleWebhook(req.body);
+            }
+          } else {
+            if (generatedSignature === providedSignature) {
+              return res.status(200).json({ message: "Webhook received successfully" });
+            }
+          }
+        } catch (e) {
+          console.error(e);
+          return res.status(400).json({ error: "Failed to process webhook" });
+        }
+      });
+      
+      // Health check
+      app.get('/health', (req: any, res: any) => {
+        res.json({ status: 'ok' });
+      });
+      
+      cachedHandler = app;
     }
     return cachedHandler(req, res);
   } catch (err: any) {
