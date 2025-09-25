@@ -27,6 +27,8 @@ import {
   CouponAddressListRepository,
   CouponAddressList,
 } from "../src/dal";
+import { ProductService } from "../src/apis/product/services/ProductService";
+import { ContractService } from "../src/services/ContractService";
 
 let cachedHandler: any;
 let providersRegistered = false;
@@ -85,6 +87,17 @@ function registerProvidersOnce() {
   registerProvider({
     provide: CouponAddressListRepository,
     useValue: new CouponAddressListRepository(CouponAddressList, SuperHedgeDataSource.createEntityManager()),
+  });
+
+  // Register services explicitly
+  registerProvider({
+    provide: ProductService,
+    useClass: ProductService,
+  });
+
+  registerProvider({
+    provide: ContractService,
+    useClass: ContractService,
   });
 
   providersRegistered = true;
