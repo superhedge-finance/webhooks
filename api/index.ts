@@ -138,6 +138,11 @@ export default async function handler(req: any, res: any) {
       
       // Swagger JSON
       app.get('/swagger.json', (req: any, res: any) => {
+        // Get protocol and host from request headers
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+        const host = req.headers.host || req.get('host') || 'webhook.superhedge.com';
+        const baseUrl = `${protocol}://${host}`;
+        
         const swaggerSpec = {
           openapi: "3.0.0",
           info: {
@@ -147,7 +152,7 @@ export default async function handler(req: any, res: any) {
           },
           servers: [
             {
-              url: "https://webhooks-9rd8hqotj-superhedge.vercel.app",
+              url: baseUrl,
               description: "Production server"
             }
           ],
