@@ -80,8 +80,8 @@ export default async function handler(req: any, res: any) {
       (webhookService as any).productService = productService;
       (webhookService as any).contractService = contractService;
       
-      // Webhook route
-      app.post('/webhook', async (req: any, res: any) => {
+      // Webhook handler function
+      const webhookHandler = async (req: any, res: any) => {
         try {
           const providedSignature = req.headers["x-signature"];
           const generatedSignature = require('web3').utils.sha3(JSON.stringify(req.body) + process.env.MORALIS_STREAM_API_KEY);
@@ -102,7 +102,11 @@ export default async function handler(req: any, res: any) {
           console.error(e);
           return res.status(400).json({ error: "Failed to process webhook" });
         }
-      });
+      };
+      
+      // Webhook routes - support both /webhook and /webhook/api for compatibility
+      app.post('/webhook', webhookHandler);
+      app.post('/webhook/api', webhookHandler);
       
       // Health check
       app.get('/health', (req: any, res: any) => {
@@ -161,6 +165,59 @@ export default async function handler(req: any, res: any) {
               post: {
                 summary: "Handle webhook",
                 description: "Process incoming webhook from Moralis",
+                requestBody: {
+                  required: true,
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "object",
+                        properties: {
+                          chainId: { type: "string" },
+                          confirmed: { type: "boolean" },
+                          abi: { type: "array" },
+                          logs: { type: "array" },
+                          txs: { type: "array" },
+                          erc20Transfers: { type: "array" },
+                          block: { type: "object" }
+                        }
+                      }
+                    }
+                  }
+                },
+                responses: {
+                  "200": {
+                    description: "Webhook processed successfully",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          type: "object",
+                          properties: {
+                            message: { type: "string" }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "400": {
+                    description: "Bad request",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          type: "object",
+                          properties: {
+                            error: { type: "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/webhook/api": {
+              post: {
+                summary: "Handle webhook (alternative route)",
+                description: "Process incoming webhook from Moralis - alternative route for compatibility",
                 requestBody: {
                   required: true,
                   content: {
